@@ -1,64 +1,121 @@
+// LinkedList.h
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
 #include <string>
 
-// Node structure to store each word and its frequency.
+// Node structure: holds a word, its frequency, and a next pointer
 struct Node {
-    std::string word;  // The word itself
-    int freq;          // Frequency count for this word
-    Node* next;        // Pointer to the next node
-
-    // Constructor: initializes word, sets frequency to 1, and next pointer to nullptr.
+    std::string word;
+    int freq;
+    Node* next;
     Node(const std::string& w) : word(w), freq(1), next(nullptr) {}
 };
 
+// LinkedList: stores Nodes in lexicographical order, tracks frequencies, and can sort by freq
 class LinkedList {
 public:
-    // Constructor: initializes an empty list.
-    LinkedList();
-
-    // Destructor: frees all allocated nodes.
-    ~LinkedList();
-
-    // Inserts a word into the linked list in lexicographical order.
-    // If the word already exists, its frequency is incremented.
-    void insert_in_order(const std::string& word);
-
-    // Searches for the node containing the given word.
-    // Returns a pointer to the node if found, otherwise returns nullptr.
-    Node* search(const std::string& word);
-
-    // Returns the number of unique words stored in the list.
-    int size() const;
-
-    // Returns the head pointer of the list.
-    Node* getHead() const;
-
-    // Optional: Sorts the linked list by frequency in descending order.
-    // In case of ties, the order remains lexicographical.
-    void sort_by_frequency();
-
-    void reverse(){// working rever 
-        if(!head || !(head->next)) return; // empty list or list of 1 elem
-        Node* pre = head;
-        Node* post = head->next;
-        while(post){
-            Node* temp = post->next;
-            post->next = head;
-            pre->next = temp;
-            head = post;
-            post = temp;
+    LinkedList() : head(nullptr) {}
+    ~LinkedList() {
+        Node* cur = head;
+        while (cur) {
+            Node* nxt = cur->next;
+            delete cur;
+            cur = nxt;
         }
     }
 
-private:
-    Node* head;  // Pointer to the head of the linked list
+    // Insert word in lex order; increment freq if it already exists
+    void insert_in_order(const std::string& w) {
+        if (!head) {
+            head = new Node(w);
+            return;
+        }
+        Node* prev = nullptr;
+        Node* cur = head;
+        while (cur && cur->word < w) {
+            prev = cur;
+            cur = cur->next;
+        }
+        if (cur && cur->word == w) {
+            cur->freq++;
+            return;
+        }
+        Node* n = new Node(w);
+        n->next = cur;
+        if (prev)
+            prev->next = n;
+        else
+            head = n;
+    }
 
-    // Helper functions for merge sort used in sort_by_frequency.
-    Node* mergeSort(Node* node);
-    Node* sortedMerge(Node* a, Node* b);
-    void splitList(Node* source, Node** frontRef, Node** backRef);
+    // Find node by word
+    Node* search(const std::string& w) {
+        Node* cur = head;
+        while (cur) {
+            if (cur->word == w)
+                return cur;
+            cur = cur->next;
+        }
+        return nullptr;
+    }
+
+    // Count unique words
+    int size() const {
+        int cnt = 0;
+        Node* cur = head;
+        while (cur) {
+            cnt++;
+            cur = cur->next;
+        }
+        return cnt;
+    }
+
+    // Access head for iteration
+    Node* getHead() const { return head; }
+
+    // Sort list by descending frequency (tie: lex order)
+    void sort_by_frequency() { head = mergeSort(head); }
+
+private:
+    Node* head;
+
+    // Merge sort utilities
+    Node* mergeSort(Node* h) {
+        if (!h || !h->next) return h;
+        Node* a; Node* b;
+        splitList(h, &a, &b);
+        a = mergeSort(a);
+        b = mergeSort(b);
+        return sortedMerge(a, b);
+    }
+
+    Node* sortedMerge(Node* a, Node* b) {
+        if (!a) return b;
+        if (!b) return a;
+        if (a->freq > b->freq || (a->freq == b->freq && a->word < b->word)) {
+            a->next = sortedMerge(a->next, b);
+            return a;
+        } else {
+            b->next = sortedMerge(a, b->next);
+            return b;
+        }
+    }
+
+    void splitList(Node* src, Node** frontRef, Node** backRef) {
+        Node* fast = src->next;
+        Node* slow = src;
+        while (fast) {
+            fast = fast->next;
+            if (fast) {
+                slow = slow->next;
+                fast = fast->next;
+            }
+        }
+        *frontRef = src;
+        *backRef = slow->next;
+        slow->next = nullptr;
+    }
 };
 
 #endif // LINKEDLIST_H

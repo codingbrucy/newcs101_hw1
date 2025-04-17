@@ -2,8 +2,8 @@
 
 CXX = g++
 CXXFLAGS = -Wall -std=c++17
-TARGET = main
-SRCS = main.cpp
+TARGET = bard
+SRCS = Bard.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 $(TARGET): $(OBJS)
